@@ -25,7 +25,7 @@ jobs:
       uses: trstringer/manual-approval@v1
       with:
         secret: ${{ github.TOKEN }}
-        approvers: your-github-username
+        approvers: chris-jt # Reemplazar esto con tu nombre de usuario de GitHub
 
     - name: Delete CloudFormation stack
       run: |
