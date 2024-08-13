@@ -2,11 +2,6 @@ name: Deploy Infrastructure
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm_deploy:
-        description: 'Type "DEPLOY" to confirm infrastructure deployment'
-        required: true
-        type: string
 
 jobs:
   deploy:
@@ -27,30 +22,30 @@ jobs:
           --template-file cloudformation/template.yml \
           --stack-name my-stack \
           --parameter-overrides AccountId=${{ secrets.AWS_ACCOUNT_ID }} \
-          --capabilities CAPABILITY_IAM \
-          --no-execute-changeset
-
-    - name: Wait for manual approval
-      uses: trstringer/manual-approval@v1
-      with:
-        secret: ${{ secrets.GITHUB_TOKEN }}
-        approvers: chris-jt  # este es tu nombre de usuario de GitHub
-
-    - name: Execute CloudFormation changeset
-      run: |
-        aws cloudformation execute-change-set \
-          --stack-name my-stack \
-          --change-set-name $(aws cloudformation list-change-sets --stack-name my-stack --query 'Summaries[0].ChangeSetName' --output text)
+          --capabilities CAPABILITY_IAM
 
     - name: Wait for CloudFormation stack to complete
       run: |
         aws cloudformation wait stack-create-complete --stack-name my-stack
 
+    - name: Debug - List Stack Outputs
+      run: |
+        aws cloudformation describe-stacks --stack-name my-stack --query "Stacks[0].Outputs"
+
     - name: Get S3 bucket name
       run: |
         BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name my-stack --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
+        echo "Bucket Name: $BUCKET_NAME"
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+
+    - name: Debug - Print Bucket Name
+      run: |
+        echo "Bucket Name from env: ${{ env.BUCKET_NAME }}"
 
     - name: Upload website to S3
       run: |
+        if [ -z "${{ env.BUCKET_NAME }}" ]; then
+          echo "Error: Bucket name is empty"
+          exit 1
+        fi
         aws s3 cp web/index.php s3://${{ env.BUCKET_NAME }}/
