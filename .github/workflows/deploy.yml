@@ -2,6 +2,12 @@ name: Deploy Infrastructure
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Type "DEPLOY" to confirm infrastructure deployment'
+        required: true
+        type: string
+
 
 jobs:
   deploy:
