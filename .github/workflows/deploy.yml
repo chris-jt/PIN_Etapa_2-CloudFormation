@@ -25,7 +25,7 @@ jobs:
     - name: Deploy to AWS CloudFormation
       run: |
         aws cloudformation deploy \
-          --template-file terraform/template.yaml \
+          --template-file CloudFormation/template.yaml \
           --stack-name proyecto-aws-stack \
           --parameter-overrides KeyName=${{ secrets.EC2_KEY_NAME }} \
           --capabilities CAPABILITY_NAMED_IAM
