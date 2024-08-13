@@ -1,13 +1,7 @@
-name: Deploy to AWS
+name: Deploy Infrastructure
 
 on:
-    workflow_dispatch:
-      inputs:
-        confirm_deploy:
-          description: 'Type "DEPLOY" to confirm infrastructure deployment'
-          required: true
-          type: string
-  
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,7 +19,24 @@ jobs:
     - name: Deploy to AWS CloudFormation
       run: |
         aws cloudformation deploy \
-          --template-file CloudFormation/template.yaml \
-          --stack-name proyecto-aws-stack \
-          --parameter-overrides KeyName=${{ secrets.EC2_KEY_NAME }} \
-          --capabilities CAPABILITY_NAMED_IAM
+          --template-file cloudformation/template.yml \
+          --stack-name my-stack \
+          --parameter-overrides AccountId=${{ secrets.AWS_ACCOUNT_ID }} \
+          --capabilities CAPABILITY_IAM \
+          --no-execute-changeset
+
+    - name: Wait for manual approval
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: your-github-username
+
+    - name: Execute CloudFormation changeset
+      run: |
+        aws cloudformation execute-change-set \
+          --stack-name my-stack \
+          --change-set-name $(aws cloudformation list-change-sets --stack-name my-stack --query 'Summaries[0].ChangeSetName' --output text)
+
+    - name: Upload website to S3
+      run: |
+        aws s3 cp web/index.php s3://my-website-bucket-${{ secrets.AWS_ACCOUNT_ID }}/
