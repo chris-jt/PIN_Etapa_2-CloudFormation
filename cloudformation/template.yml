@@ -73,6 +73,11 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
+  
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'my-website-bucket-${AccountId}'
 
   WebServerInstance:
     Type: AWS::EC2::Instance
@@ -127,11 +132,6 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
-  WebsiteBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub 'my-website-bucket-${AccountId}'
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table

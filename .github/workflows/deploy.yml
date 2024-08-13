@@ -54,4 +54,6 @@ jobs:
           echo "Error: Bucket name is empty"
           exit 1
         fi
+        aws s3 cp scripts/install_apache.sh s3://${{ env.BUCKET_NAME }}/
+        aws s3 cp scripts/mount_s3.sh s3://${{ env.BUCKET_NAME }}/
         aws s3 cp web/index.php s3://${{ env.BUCKET_NAME }}/
