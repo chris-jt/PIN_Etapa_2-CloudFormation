@@ -1,14 +1,33 @@
-# Explicación:
+# Proyecto de Infraestructura AWS
 
-El archivo template.yaml define toda la infraestructura usando CloudFormation en lugar de Terraform. Incluye todos los recursos que teníamos antes: VPC, subnet, Internet Gateway, EC2 instance, S3 bucket, y DynamoDB table.
-El workflow de despliegue (deploy.yml) ahora usa el comando aws cloudformation deploy para crear o actualizar el stack de CloudFormation.
-El nuevo workflow de eliminación (delete.yml) usa workflow_dispatch, lo que significa que se puede activar manualmente desde la interfaz de GitHub. Utiliza el comando aws cloudformation delete-stack para eliminar todo el stack de CloudFormation, eliminando así toda la infraestructura creada.
+Este proyecto despliega una infraestructura en AWS que incluye una VPC, una instancia EC2, un bucket S3, una tabla DynamoDB y una página PHP "Hola Mundo".
 
-# Para usar este setup:
+## Componentes
 
-Sube estos cambios a tu repositorio de GitHub.
-Para desplegar, haz un push a la rama main como antes.
-Para eliminar la infraestructura, ve a la pestaña "Actions" en tu repositorio de GitHub, selecciona el workflow "Delete AWS Infrastructure" y haz clic en "Run workflow".
+- VPC con una subred pública
+- Instancia EC2 t2.micro con Apache
+- Bucket S3 para almacenar la página web
+- Tabla DynamoDB
+- Página PHP "Hola Mundo"
 
-Este enfoque proporciona una manera fácil de desplegar y eliminar toda la infraestructura con un solo clic, mientras mantiene el proceso de eliminación como una acción manual para evitar eliminaciones accidentales.
+## Despliegue
 
+El despliegue se realiza mediante GitHub Actions. Para iniciar el despliegue:
+
+1. Ve a la pestaña "Actions" en el repositorio de GitHub.
+2. Selecciona el flujo de trabajo "Deploy Infrastructure".
+3. Haz clic en "Run workflow".
+4. Espera la aprobación manual y luego confirma el despliegue.
+
+## Acceso a la página web
+
+Una vez desplegada la infraestructura, puedes acceder a la página web utilizando la URL proporcionada en la salida de CloudFormation. Esta URL será la dirección DNS pública de la instancia EC2.
+
+## Eliminación de la infraestructura
+
+Para eliminar la infraestructura:
+
+1. Ve a la pestaña "Actions" en el repositorio de GitHub.
+2. Selecciona el flujo de trabajo "Delete Infrastructure".
+3. Haz clic en "Run workflow".
+4. Espera la aprobación manual y luego confirma la eliminación.
