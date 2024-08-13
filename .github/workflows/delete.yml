@@ -1,12 +1,19 @@
-name: Delete AWS Infrastructure
+name: Delete Infrastructure
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_delete:
+        description: 'Type "DELETE" to confirm infrastructure deletion'
+        required: true
+        type: string
 
 jobs:
   delete:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -14,7 +21,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    - name: Delete CloudFormation Stack
+    - name: Wait for manual approval
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: your-github-username
+
+    - name: Delete CloudFormation stack
       run: |
-        aws cloudformation delete-stack --stack-name proyecto-aws-stack
-        aws cloudformation wait stack-delete-complete --stack-name proyecto-aws-stack
+        aws cloudformation delete-stack --stack-name my-stack
