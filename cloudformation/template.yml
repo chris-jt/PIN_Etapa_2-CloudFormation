@@ -77,9 +77,9 @@ Resources:
   WebServerInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0c55b159cbfafe1f0  # Amazon Linux 2 AMI (adjust for your region)
+      ImageId: ami-00402f0bdf4996822  #ami-0c55b159cbfafe1f0  # Debian 12 (HVM), SSD Volume Type
       InstanceType: t2.micro
-      KeyName: my-key-pair  # Make sure to create this key pair in AWS
+      KeyName: christian_key_aws  # Make sure to create this key pair in AWS
       NetworkInterfaces: 
         - AssociatePublicIpAddress: "true"
           DeviceIndex: "0"
