@@ -27,6 +27,15 @@ jobs:
       #     secret: ${{ github.TOKEN }}
       #     approvers: chris-jt # Reemplazar esto con tu nombre de usuario de GitHub
 
+      - name: Get S3 bucket name
+        run: |
+          BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name PIN-stack --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
+          echo "S3_BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+
+      - name: Empty S3 bucket
+        run: |
+          aws s3 rm s3://${{ env.S3_BUCKET_NAME }} --recursive
+
       - name: Delete CloudFormation stack
         run: |
           aws cloudformation delete-stack --stack-name PIN-stack
