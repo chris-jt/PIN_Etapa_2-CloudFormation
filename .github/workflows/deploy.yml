@@ -35,6 +35,13 @@ jobs:
           aws s3 cp ../web/index.php s3://${{ env.TEMP_BUCKET_NAME }}/    
       working-directory: cloudformation
 
+    - name: List directory contents
+      run: |
+        echo "Current directory:"
+        ls -la
+        echo "Cloudformation directory (if exists):"
+        ls -la cloudformation || echo "Cloudformation directory does not exist"
+    
     - name: Deploy to AWS CloudFormation
       run: |
         aws cloudformation deploy \
@@ -42,7 +49,7 @@ jobs:
           --stack-name PIN-stack \
           --parameter-overrides AccountId=${{ secrets.AWS_ACCOUNT_ID }} TempBucketName=${{ env.TEMP_BUCKET_NAME }} \
           --capabilities CAPABILITY_IAM
-      working-directory: cloudformation
+      #working-directory: cloudformation
 
     - name: Wait for CloudFormation stack to complete
       run: |
