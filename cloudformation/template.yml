@@ -116,22 +116,22 @@ Resources:
     Properties:
       BucketName: !Sub 'PIN-bucket-${AccountId}'
 
-  WebServerInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-00402f0bdf4996822  #ami-0c55b159cbfafe1f0  # Debian 12 (HVM), SSD Volume Type
-      InstanceType: t2.micro
-      KeyName: christian_key_aws  # Make sure to create this key pair in AWS
-      NetworkInterfaces: 
-        - AssociatePublicIpAddress: "true"
-          DeviceIndex: "0"
-          GroupSet: 
-            - !Ref WebServerSecurityGroup
-          SubnetId: !Ref PublicSubnet
-      UserData:
-        Fn::Base64: !Sub |
+WebServerInstance:
+  Type: AWS::EC2::Instance
+  Properties:
+    ImageId: ami-00402f0bdf4996822
+    InstanceType: t2.micro
+    KeyName: christian_key_aws
+    NetworkInterfaces: 
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet: 
+          - !Ref WebServerSecurityGroup
+        SubnetId: !Ref PublicSubnet
+    UserData:
+      Fn::Base64: !Sub |
         #!/bin/bash
-        # Instalar AWS CLI
+        # Actualizar e instalar AWS CLI
         sudo apt-get update
         sudo apt-get install -y awscli
         
@@ -149,11 +149,11 @@ Resources:
         /tmp/mount_s3.sh ${WebsiteBucket}
         
         # Copiar index.php al directorio web
-        cp /tmp/index.php /var/www/html/
+        sudo cp /tmp/index.php /var/www/html/
         
         # Señalizar que la configuración se ha completado
         /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
-      IamInstanceProfile: !Ref WebServerInstanceProfile
+    IamInstanceProfile: !Ref WebServerInstanceProfile
 
   WebServerInstanceProfile:
     Type: AWS::IAM::InstanceProfile
