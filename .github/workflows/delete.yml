@@ -1,5 +1,4 @@
 name: Delete Infrastructure
-
 on:
   workflow_dispatch:
     inputs:
@@ -11,22 +10,31 @@ on:
 jobs:
   delete:
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_delete == 'DELETE' }}
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Wait for manual approval
-      uses: trstringer/manual-approval@v1
-      with:
-        secret: ${{ github.TOKEN }}
-        approvers: chris-jt # Reemplazar esto con tu nombre de usuario de GitHub
+      # - name: Wait for manual approval
+      #   uses: trstringer/manual-approval@v1
+      #   with:
+      #     secret: ${{ github.TOKEN }}
+      #     approvers: chris-jt # Reemplazar esto con tu nombre de usuario de GitHub
 
-    - name: Delete CloudFormation stack
-      run: |
-        aws cloudformation delete-stack --stack-name my-stack
+      - name: Delete CloudFormation stack
+        run: |
+          aws cloudformation delete-stack --stack-name PIN-stack
+
+      - name: Wait for stack deletion to complete
+        run: |
+          aws cloudformation wait stack-delete-complete --stack-name PIN-stack
+
+      - name: Confirm deletion
+        run: |
+          echo "Infrastructure deletion process completed."

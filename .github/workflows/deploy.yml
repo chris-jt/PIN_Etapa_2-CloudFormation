@@ -39,22 +39,22 @@ jobs:
       run: |
         aws cloudformation deploy \
           --template-file cloudformation/template.yml \
-          --stack-name my-stack \
+          --stack-name PIN-stack \
           --parameter-overrides AccountId=${{ secrets.AWS_ACCOUNT_ID }} TempBucketName=${{ env.TEMP_BUCKET_NAME }} \
           --capabilities CAPABILITY_IAM
       working-directory: cloudformation
-      
+
     - name: Wait for CloudFormation stack to complete
       run: |
-        aws cloudformation wait stack-create-complete --stack-name my-stack
+        aws cloudformation wait stack-create-complete --stack-name PIN-stack
 
     - name: Debug - List Stack Outputs
       run: |
-        aws cloudformation describe-stacks --stack-name my-stack --query "Stacks[0].Outputs"
+        aws cloudformation describe-stacks --stack-name PIN-stack --query "Stacks[0].Outputs"
 
     - name: Get S3 bucket name
       run: |
-        BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name my-stack --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
+        BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name PIN-stack --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
         echo "Bucket Name: $BUCKET_NAME"
         echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
 
