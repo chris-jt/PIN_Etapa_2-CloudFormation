@@ -116,51 +116,44 @@ Resources:
     Properties:
       BucketName: !Sub 'PIN-bucket-${AccountId}'
 
-WebServerInstance:
-  Type: AWS::EC2::Instance
-  Properties:
-    ImageId: ami-00402f0bdf4996822
-    InstanceType: t2.micro
-    KeyName: christian_key_aws
-    NetworkInterfaces: 
-      - AssociatePublicIpAddress: "true"
-        DeviceIndex: "0"
-        GroupSet: 
-          - !Ref WebServerSecurityGroup
-        SubnetId: !Ref PublicSubnet
-    UserData:
-      Fn::Base64: !Sub |
-        #!/bin/bash
-        # Actualizar e instalar AWS CLI
-        sudo apt-get update
-        sudo apt-get install -y awscli
-        
-        # Copiar scripts desde el bucket temporal
-        aws s3 cp s3://${TempBucketName}/install_apache.sh /tmp/
-        aws s3 cp s3://${TempBucketName}/mount_s3.sh /tmp/
-        aws s3 cp s3://${TempBucketName}/index.php /tmp/
-        
-        # Dar permisos de ejecución a los scripts
-        chmod +x /tmp/install_apache.sh
-        chmod +x /tmp/mount_s3.sh
-        
-        # Ejecutar scripts
-        /tmp/install_apache.sh
-        /tmp/mount_s3.sh ${WebsiteBucket}
-        
-        # Copiar index.php al directorio web
-        sudo cp /tmp/index.php /var/www/html/
-        
-        # Señalizar que la configuración se ha completado
-        /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
-    IamInstanceProfile: !Ref WebServerInstanceProfile
-
-  WebServerInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
+  WebServerInstance:
+    Type: AWS::EC2::Instance
     Properties:
-      Path: "/"
-      Roles: 
-        - !Ref WebServerRole
+      ImageId: ami-00402f0bdf4996822
+      InstanceType: t2.micro
+      KeyName: christian_key_aws
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          GroupSet: 
+            - !Ref WebServerSecurityGroup
+          SubnetId: !Ref PublicSubnet
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Actualizar e instalar AWS CLI
+          sudo apt-get update
+          sudo apt-get install -y awscli
+          
+          # Copiar scripts desde el bucket temporal
+          aws s3 cp s3://${TempBucketName}/install_apache.sh /tmp/
+          aws s3 cp s3://${TempBucketName}/mount_s3.sh /tmp/
+          aws s3 cp s3://${TempBucketName}/index.php /tmp/
+          
+          # Dar permisos de ejecución a los scripts
+          chmod +x /tmp/install_apache.sh
+          chmod +x /tmp/mount_s3.sh
+          
+          # Ejecutar scripts
+          /tmp/install_apache.sh
+          /tmp/mount_s3.sh ${WebsiteBucket}
+          
+          # Copiar index.php al directorio web
+          sudo cp /tmp/index.php /var/www/html/
+          
+          # Señalizar que la configuración se ha completado
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+      IamInstanceProfile: !Ref WebServerInstanceProfile
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
