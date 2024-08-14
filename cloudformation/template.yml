@@ -141,8 +141,8 @@ Resources:
           aws s3 cp s3://${TempBucketName}/index.php /tmp/
           
           # Dar permisos de ejecución a los scripts
-          chmod +x /tmp/install_apache.sh
-          chmod +x /tmp/mount_s3.sh
+          sudo chmod +x /tmp/install_apache.sh
+          sudo chmod +x /tmp/mount_s3.sh
           
           # Ejecutar scripts
           /tmp/install_apache.sh
