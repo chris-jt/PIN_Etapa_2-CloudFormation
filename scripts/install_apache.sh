@@ -1,11 +1,8 @@
 #!/bin/bash
-
-# Actualizar el sistema
-yum update -y
-
-# Instalar Apache y PHP
-yum install -y httpd php
-
+sudo apt-get update
+sudo apt-get install -y apache2 php libapache2-mod-php
+sudo systemctl enable apache2
+sudo systemctl start apache2
 # Iniciar Apache y configurarlo para que se inicie automáticamente en cada reinicio
 systemctl start httpd
 systemctl enable httpd

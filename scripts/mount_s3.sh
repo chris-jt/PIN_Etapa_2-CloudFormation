@@ -12,7 +12,7 @@ MOUNT_POINT="/mnt/s3bucket"
 # Instalar s3fs si no está instalado
 if ! command -v s3fs &> /dev/null; then
     echo "Instalando s3fs..."
-    sudo yum install -y s3fs-fuse
+    sudo apt-get install -y s3fs-fuse
 fi
 
 # Crear el punto de montaje si no existe
