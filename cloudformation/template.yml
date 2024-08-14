@@ -101,6 +101,8 @@ Resources:
                 Resource: 
                   - !Sub "arn:aws:s3:::${WebsiteBucket}"
                   - !Sub "arn:aws:s3:::${WebsiteBucket}/*"
+                  - !Sub "arn:aws:s3:::${TempBucketName}"
+                  - !Sub "arn:aws:s3:::${TempBucketName}/*"
   
   WebServerInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -108,33 +110,6 @@ Resources:
       Path: "/"
       Roles: 
         - !Ref WebServerRole
-  
-  InstallApacheScript:
-    Type: AWS::S3::Object
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      Key: install_apache.sh
-      SourceBundle:
-        S3Bucket: !Ref TempBucketName
-        S3Key: install_apache.sh
-
-  MountS3Script:
-    Type: AWS::S3::Object
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      Key: mount_s3.sh
-      SourceBundle:
-        S3Bucket: !Ref TempBucketName
-        S3Key: mount_s3.sh
-
-  IndexPhpFile:
-    Type: AWS::S3::Object
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      Key: index.php
-      SourceBundle:
-        S3Bucket: !Ref TempBucketName
-        S3Key: index.php
 
   WebsiteBucket:
     Type: AWS::S3::Bucket
@@ -155,24 +130,29 @@ Resources:
           SubnetId: !Ref PublicSubnet
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/bash
-          # Descargar scripts del bucket S3
-          aws s3 cp s3://${WebsiteBucket}/install_apache.sh /tmp/
-          aws s3 cp s3://${WebsiteBucket}/mount_s3.sh /tmp/
-          
-          # Dar permisos de ejecución a los scripts
-          chmod +x /tmp/install_apache.sh
-          chmod +x /tmp/mount_s3.sh
-          
-          # Ejecutar scripts
-          /tmp/install_apache.sh
-          /tmp/mount_s3.sh ${WebsiteBucket}
-          
-          # Copiar index.php al directorio web
-          aws s3 cp s3://${WebsiteBucket}/index.php /var/www/html/
-          
-          # Señalizar que la configuración se ha completado
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+        #!/bin/bash
+        # Instalar AWS CLI
+        apt-get update
+        apt-get install -y awscli
+        
+        # Copiar scripts desde el bucket temporal
+        aws s3 cp s3://${TempBucketName}/install_apache.sh /tmp/
+        aws s3 cp s3://${TempBucketName}/mount_s3.sh /tmp/
+        aws s3 cp s3://${TempBucketName}/index.php /tmp/
+        
+        # Dar permisos de ejecución a los scripts
+        chmod +x /tmp/install_apache.sh
+        chmod +x /tmp/mount_s3.sh
+        
+        # Ejecutar scripts
+        /tmp/install_apache.sh
+        /tmp/mount_s3.sh ${WebsiteBucket}
+        
+        # Copiar index.php al directorio web
+        cp /tmp/index.php /var/www/html/
+        
+        # Señalizar que la configuración se ha completado
+        /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
       IamInstanceProfile: !Ref WebServerInstanceProfile
 
   WebServerInstanceProfile:
