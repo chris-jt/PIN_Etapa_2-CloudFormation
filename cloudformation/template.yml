@@ -114,7 +114,7 @@ Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'PIN-bucket-${AccountId}'
+      BucketName: !Sub 'pin-bucket-${AccountId}'
 
   WebServerInstance:
     Type: AWS::EC2::Instance
