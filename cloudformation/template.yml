@@ -128,31 +128,60 @@ Resources:
           GroupSet: 
             - !Ref WebServerSecurityGroup
           SubnetId: !Ref PublicSubnet
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          # Actualizar e instalar AWS CLI
-          sudo apt-get update
-          sudo apt-get install -y awscli
-          
-          # Copiar scripts desde el bucket temporal
-          aws s3 cp s3://${TempBucketName}/install_apache.sh /tmp/
-          aws s3 cp s3://${TempBucketName}/mount_s3.sh /tmp/
-          aws s3 cp s3://${TempBucketName}/index.php /tmp/
-          
-          # Dar permisos de ejecución a los scripts
-          sudo chmod +x /tmp/install_apache.sh
-          sudo chmod +x /tmp/mount_s3.sh
-          
-          # Ejecutar scripts
-          /tmp/install_apache.sh
-          /tmp/mount_s3.sh ${WebsiteBucket}
-          
-          # Copiar index.php al directorio web
-          sudo cp /tmp/index.php /var/www/html/
-          
-          # Señalizar que la configuración se ha completado
-          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+            UserData:
+              Fn::Base64: !Sub |
+                #!/bin/bash
+    
+                # Configurar logging
+                exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+    
+                echo "Iniciando configuración del servidor..."
+                
+                # Actualizar e instalar AWS CLI
+                sudo apt-get update
+                sudo apt-get install -y awscli
+                
+                echo "AWS CLI instalado."
+                
+                # Copiar scripts desde el bucket temporal
+                aws s3 cp s3://${TempBucketName}/install_apache.sh /tmp/
+                aws s3 cp s3://${TempBucketName}/mount_s3.sh /tmp/
+                aws s3 cp s3://${TempBucketName}/index.php /tmp/
+    
+                echo "Scripts copiados desde S3."
+                
+                # Dar permisos de ejecución a los scripts
+                chmod +x /tmp/install_apache.sh
+                chmod +x /tmp/mount_s3.sh
+                
+                echo "Permisos de ejecución otorgados a los scripts."
+                
+                # Ejecutar scripts
+                echo "Ejecutando install_apache.sh..."
+                /tmp/install_apache.sh
+                if [ $? -ne 0 ]; then
+                  echo "Error al ejecutar install_apache.sh"
+                else
+                  echo "install_apache.sh ejecutado con éxito."
+                fi
+                
+                echo "Ejecutando mount_s3.sh..."
+                /tmp/mount_s3.sh "${WebsiteBucket}"
+                if [ $? -ne 0 ]; then
+                  echo "Error al ejecutar mount_s3.sh"
+                else
+                  echo "mount_s3.sh ejecutado con éxito."
+                fi
+                
+                # Copiar index.php al directorio web
+                sudo cp /tmp/index.php /var/www/html/
+                
+                echo "index.php copiado al directorio web."
+                
+                # Señalizar que la configuración se ha completado
+                /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+                
+                echo "Configuración del servidor completada."
       IamInstanceProfile: !Ref WebServerInstanceProfile
 
   DynamoDBTable:
