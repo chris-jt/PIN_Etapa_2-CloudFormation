@@ -5,6 +5,9 @@ Parameters:
   AccountId:
     Type: String
     Description: AWS Account ID
+  TempBucketName:
+    Type: String
+    Description: Name of the temporary S3 bucket
 
 Resources:
   MyVPC:
@@ -15,7 +18,7 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: MyVPC
+          Value: PIN_VPC
 
   PublicSubnet:
     Type: AWS::EC2::Subnet
@@ -25,7 +28,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: Public Subnet
+          Value: PIN_VPC_Subnet
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -34,7 +37,7 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref MyVPC
-      InternetGatewayId: !Ref InternetGateway
+      InternetGatewayId: !Ref PIN_InternetGateway
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -42,7 +45,7 @@ Resources:
       VpcId: !Ref MyVPC
       Tags:
         - Key: Name
-          Value: Public Route Table
+          Value: PIN_Public_Route_Table
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -74,10 +77,69 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
   
+  WebServerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      Policies:
+        - PolicyName: S3BucketAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: 
+                  - !Sub "arn:aws:s3:::${WebsiteBucket}"
+                  - !Sub "arn:aws:s3:::${WebsiteBucket}/*"
+  
+  WebServerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles: 
+        - !Ref WebServerRole
+  
+  InstallApacheScript:
+    Type: AWS::S3::Object
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      Key: install_apache.sh
+      SourceBundle:
+        S3Bucket: !Ref TempBucketName
+        S3Key: install_apache.sh
+
+  MountS3Script:
+    Type: AWS::S3::Object
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      Key: mount_s3.sh
+      SourceBundle:
+        S3Bucket: !Ref TempBucketName
+        S3Key: mount_s3.sh
+
+  IndexPhpFile:
+    Type: AWS::S3::Object
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      Key: index.php
+      SourceBundle:
+        S3Bucket: !Ref TempBucketName
+        S3Key: index.php
+
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'my-website-bucket-${AccountId}'
+      BucketName: !Sub 'PIN-bucket-${AccountId}'
 
   WebServerInstance:
     Type: AWS::EC2::Instance
@@ -120,19 +182,6 @@ Resources:
       Roles: 
         - !Ref WebServerRole
 
-  WebServerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -149,5 +198,8 @@ Resources:
 
 Outputs:
   WebsiteURL:
-    Description: URL for website hosted on S3
+    Description: URL for website hosted on EC2
     Value: !Sub 'http://${WebServerInstance.PublicDnsName}'
+  WebsiteBucketName:
+    Description: Name of the S3 bucket for the website
+    Value: !Ref WebsiteBucket
